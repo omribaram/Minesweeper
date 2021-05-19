@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <title>Mine Sweeper</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body onload="initGame(1)">
+    <div>Time: <span class="stopwatch">0</span> || </div>
+    <div>Mines: <span class="mines"></span> ||</div>
+    <div>Level:<button class="level" onclick="initGame(1)">Beginner</button>
+        <button class="level" onclick="initGame(2)">Medium</button>
+        <button class="level" onclick="initGame(3)">Expert</button>
+    </div>
+    <div> || Lives: <span class="lives">3</span></div>
+    <table>
+        <tbody class="board"></tbody>
+    </table>
+    <script src="js/util.js"></script>
+    <script src="js/app.js"></script>
+</body>
+
+</html>
