@@ -50,6 +50,7 @@ td {
     cursor: pointer;
     border: 3px groove goldenrod;
     background-color: rgb(233, 233, 233);
+    cursor: pointer;
 }
 
 td.shown {
@@ -65,18 +66,34 @@ td.shown-expanded {
 }
 
 td span.content {
-    display: none;
+    display: inline-block;
+    opacity: 0;
     vertical-align: middle;
+}
+
+td span.content.shown {
+    opacity: 1;
+}
+
+td span.content.hint {
+    opacity: 1;
+    transition: all 2s linear;
 }
 
 td span.flagged {
     display: none;
 }
 
-td span.content.shown {
+td span.flagged.shown {
     display: inline-block;
 }
 
-td span.flagged.shown {
-    display: inline-block;
+.hint,
+.mood {
+    cursor: pointer;
+}
+
+.hint.unshown {
+    -webkit-filter: grayscale(100%);
+    filter: grayscale(100%);
 }

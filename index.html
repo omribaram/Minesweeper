@@ -15,7 +15,11 @@
         <button class="level" onclick="initGame(12,30)">Expert</button>
     </div>
     <div> || Lives: <span class="lives-count">3</span> || </div>
-    <div><span class="mood" onclick="initGame()">😃</span></div>
+    <div><span class="mood" onclick="initGame()">😃</span> || </div>
+    <div><span data-id="1" class="hint unshown" onclick="useHint(this)">💡</span>
+        <span data-id="2" class="hint unshown" onclick="useHint(this)">💡</span>
+        <span data-id="3" class="hint unshown" onclick="useHint(this)">💡</span>
+    </div>
     <table>
         <tbody class="board"></tbody>
     </table>

@@ -10,6 +10,7 @@ const FLAG = '🚩';
 const SMILE_NORMAL = '😃';
 const SMILE_LOST = '😖';
 const SMILE_WON = '😎';
+const HINT = '💡';
 const STOPWATCH_EL = document.querySelector('.stopwatch');
 const MINES_EL = document.querySelector('.unmarked-bombs');
 const LIVES_EL = document.querySelector('.lives-count');
@@ -18,22 +19,23 @@ const MOOD_EL = document.querySelector('.mood');
 var gBoard;
 var gLevel;
 var gGame;
-var gRemainedMines;
+var gUnmarkedMines;
 var gLivesCount;
+var gHints;
 
 function initGame(size = gLevel.SIZE, mines = gLevel.MINES) {
-    gLevel = { SIZE: size, MINES: mines };
-    gGame = { isOn: true, shownCount: 0, markedCount: 0, secsPassed: 0, firstClick: true };
-    buildBoard();
-    gRemainedMines = gLevel.MINES;
-    gLivesCount = 3;
-    placeMines();
-    setMinesNegsCount(gBoard);
-    renderBoard(gBoard);
-    clearInterval(gStopwatchInterval);
-    gStopwatchInterval = null;
-    MOOD_EL.innerText = SMILE_NORMAL;
-    LIVES_EL.innerText = gLivesCount;
+    gLevel = { SIZE: size, MINES: mines }; // set/reset game level
+    gGame = { isOn: true, shownCount: 0, markedCount: 0, secsPassed: 0, firstClick: true }; // set/reset game parameters
+    buildBoard(); // construct the matrix
+    gHints = resetHints(); // set/reset game hints
+    gUnmarkedMines = gLevel.MINES; // set/reset unmarked mines on board
+    gLivesCount = 3; // set/reset lives
+    placeMines(); // place mines randomly                                   //TODO
+    setMinesNegsCount(gBoard); // update matrix with mines negs count       //place the mines after click
+    renderBoard(gBoard); // render the board as HTML
+    clearStopwatch(); // initialize the stopwatch
+    MOOD_EL.innerText = SMILE_NORMAL; // initialize the HTML mood element
+    LIVES_EL.innerText = gLivesCount; // initialize the HTML lives count element
 }
 
 function buildBoard() {
@@ -46,7 +48,6 @@ function buildBoard() {
     }
 }
 
-// Render the game's matrix as HTML
 function renderBoard(board) {
     var strHTML = '';
     for (var i = 0; i < board.length; i++) {
@@ -70,7 +71,7 @@ function renderBoard(board) {
     }
     var elBoard = document.querySelector('.board');
     elBoard.innerHTML = strHTML;
-    MINES_EL.innerText = gRemainedMines;
+    MINES_EL.innerText = gUnmarkedMines;
     STOPWATCH_EL.innerText = 0;
 }
 
@@ -79,6 +80,15 @@ function cellClicked(elCell, i, j) {
     if (gGame.firstClick) { // If this is the first click of the game, initiate the stopwatch
         startStopwatch();
         gGame.firstClick = false;
+    }
+
+    if (gHints[0].isUnderHint) {
+        elCell.querySelector('.content').classList.add('hint');
+        setTimeout(() => {
+            elCell.querySelector('.content').classList.remove('hint');
+            gHints[0].isUnderHint = false;
+        }, 1000)
+        return;
     }
 
     if (gGame.isOn) { // Check to see if game is still running
@@ -140,18 +150,18 @@ function cellMarked(elCell, i, j) {
     }
     if (gGame.isOn) { // Check to see if game is still running
         if (gBoard[i][j].isShown) return; // If a shown cell was clicked, exit
-        if (!gBoard[i][j].isMarked && gRemainedMines > 0) { // if there are still unmarked bombs left, continue
+        if (!gBoard[i][j].isMarked && gUnmarkedMines > 0) { // if there are still unmarked bombs left, continue
             gBoard[i][j].isMarked = true;
             elCell.querySelector('.flagged').classList.add('shown');
-            gRemainedMines--;
+            gUnmarkedMines--;
             checkGameOver(gBoard);
         } else if (gBoard[i][j].isMarked) { // in case of a marked cell, unmark it
             gBoard[i][j].isMarked = false;
             elCell.querySelector('.flagged').classList.remove('shown');
-            gRemainedMines++;
+            gUnmarkedMines++;
         }
     }
-    MINES_EL.innerText = gRemainedMines;
+    MINES_EL.innerText = gUnmarkedMines;
 }
 
 function gameLoss(board) {
@@ -213,4 +223,22 @@ function placeMines() {
         gBoard[location.i][location.j].isMine = true;
         count++;
     }
+}
+
+function useHint(elHint) {
+    var hintId = elHint.dataset.id;
+    if (gHints[0].isUnderHint || gHints[hintId].isUsed) return
+    gHints[0].isUnderHint = true;
+    gHints[hintId].isUsed = true
+    elHint.classList.remove('unshown');
+}
+
+function resetHints() {
+    var hints = [{ isUnderHint: false }];
+    for (var i = 0; i <= 2; i++) {
+        var elHint = document.querySelector(`[data-id='${i+1}']`);
+        hints.push({ id: i + 1, isUsed: false });
+        elHint.classList.add('unshown')
+    }
+    return hints;
 }
