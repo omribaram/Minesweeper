@@ -5,11 +5,15 @@ const noRightClick = document.querySelector('table');
 noRightClick.addEventListener('contextmenu', el => el.preventDefault());
 
 // Definition of constants throughout the game
-const MINE = '&#128163';
-const FLAG = '&#128681';
+const MINE = '💣';
+const FLAG = '🚩';
+const SMILE_NORMAL = '😃';
+const SMILE_LOST = '😖';
+const SMILE_WON = '😎';
 const STOPWATCH_EL = document.querySelector('.stopwatch');
-const MINES_EL = document.querySelector('.mines');
-const LIVES_EL = document.querySelector('.lives');
+const MINES_EL = document.querySelector('.unmarked-bombs');
+const LIVES_EL = document.querySelector('.lives-count');
+const MOOD_EL = document.querySelector('.mood');
 
 var gBoard;
 var gLevel;
@@ -17,9 +21,8 @@ var gGame;
 var gRemainedMines;
 var gLivesCount;
 
-function initGame(level) {
-    gLevel = (level === 1) ? { SIZE: 4, MINES: 2 } :
-        (level === 2) ? { SIZE: 8, MINES: 12 } : { SIZE: 12, MINES: 30 };
+function initGame(size = gLevel.SIZE, mines = gLevel.MINES) {
+    gLevel = { SIZE: size, MINES: mines };
     gGame = { isOn: true, shownCount: 0, markedCount: 0, secsPassed: 0, firstClick: true };
     buildBoard();
     gRemainedMines = gLevel.MINES;
@@ -29,6 +32,8 @@ function initGame(level) {
     renderBoard(gBoard);
     clearInterval(gStopwatchInterval);
     gStopwatchInterval = null;
+    MOOD_EL.innerText = SMILE_NORMAL;
+    LIVES_EL.innerText = gLivesCount;
 }
 
 function buildBoard() {
@@ -161,11 +166,13 @@ function gameLoss(board) {
             }
         }
     }
+    MOOD_EL.innerText = SMILE_LOST;
 }
 
 function gameWon(board) {
     clearInterval(gStopwatchInterval); // stop the stopwatch
     gGame.isOn = false; // stop the game
+    MOOD_EL.innerText = SMILE_WON;
 }
 
 // check if any unmarked bombs or any unshown cells left, in case no, game was won
