@@ -78,17 +78,17 @@ function cellClicked(elCell, i, j) {
                         gBoard[i][j].isShown = true;
                         gGame.shownCount++;
                         renderCell('add', document.querySelector(`[data-life-id='1']`), '', 'used', '')
-                        renderCell('add', elCell, '', 'clicked-mine', '')
+                        renderCell('add', elCell, '.content', 'shown-clicked-mine', 'shown');
+                        // renderCell('add', elCell, '', 'clicked-mine', '')
                         gameLoss(gBoard);
                     } else {
-                        gBoard[i][j].isShown = true;
-                        gGame.shownCount++;
                         renderCell('add', document.querySelector(`[data-life-id='${gLives.length}']`), '', 'used', '')
                         gLives[gLives.length - 1].isUsed = true;
                         gLives.pop();
-                        renderCell('add', elCell, '.content', 'shown-clicked-mine', 'shown');
-                        // gBoard[i][j].isMarked = true;
-                        checkGameOver(gBoard);
+                        renderCell('add', elCell, '.content', 'safe-click', 'shown');
+                        setTimeout(() => {
+                            renderCell('remove', elCell, '.content', 'safe-click', 'shown');
+                        }, 1000);
                     }
                 } else {
                     expandShow(gBoard, elCell, i, j); // If it's not a bomb, open negs recursively
