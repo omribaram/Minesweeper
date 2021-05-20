@@ -4,21 +4,22 @@ body {
     background: radial-gradient(circle, rgba(250, 186, 0, 1) 0%, rgba(252, 70, 70, 1) 100%);
 }
 
-div.header {
+div.page {
+    position: relative;
     width: 1000px;
-    height: 100px;
+    margin: auto;
+}
+
+div.header {
     border: 10px double black;
     position: relative;
-    padding: 15px;
-    display: block;
-    left: 29%;
-    /* transform: translate(-50%, -50%); */
-    /* margin-left: auto;
-    margin-right: auto; */
+    margin: auto;
+    display: inline-block;
+    width: 100%;
+    padding: 5px;
 }
 
 div.bestscore {
-    width: 1000px;
     padding-top: 13px;
     padding-bottom: 3px;
     vertical-align: middle;
@@ -45,8 +46,8 @@ div.time {
 
 div.safe-clicks {
     position: absolute;
-    top: 30%;
-    left: 62.5%;
+    top: 25%;
+    left: 63%;
     transform: translate(-50%, -50%);
     padding-left: 260px;
     padding-top: 18px;
@@ -54,7 +55,7 @@ div.safe-clicks {
 
 div.unmarked-mines {
     position: absolute;
-    top: 36%;
+    top: 33%;
     left: 61%;
     transform: translate(-50%, -50%);
     font-family: "Roboto Mono", monospace;
@@ -81,9 +82,9 @@ div.manual-mine-btn {
 table {
     margin-left: auto;
     margin-right: auto;
-    width: 1300px;
+    width: 100%;
     height: 800px;
-    transform: translate3d(0px, -60px, 0px) perspective(75em) rotateX(18deg) scale(1);
+    transform: translate3d(0px, -135px, 0px) perspective(75em) rotateX(18deg) scale(0.8);
     box-shadow: rgba(22, 31, 39, 0.42) 0px 60px 123px -25px, rgba(19, 26, 32, 0.08) 0px 35px 75px -35px;
     border-radius: 10px;
     border: 5px solid;
