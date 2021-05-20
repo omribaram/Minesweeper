@@ -41,6 +41,7 @@ function initGame(size = gLevel.SIZE, mines = gLevel.MINES) {
     gSafeClicksCount = 3;
     BTN_SAFECLICK.childNodes[1].innerText = gSafeClicksCount;
     BTN_MANUALMINES.disabled = false;
+    BTN_SAFECLICK.disabled = false;
     BTN_MANUALMINES.childNodes[1].innerText = gLevel.MINES;
     EL_MOOD.innerText = SMILE_NORMAL; // initialize the HTML mood element
     EL_BESTSCORE.innerText = (!localStorage.getItem(`bestScore-level-${gLevel.SIZE}`)) ? 'You haven\'t won this level yet.' : localStorage.getItem(`bestScore-level-${gLevel.SIZE}`);
