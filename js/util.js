@@ -40,13 +40,13 @@ function getRandomInt(min, max) {
 
 // Returns a safe location which is not a mine
 function getSafeLoc(board) {
-    var loc = { i: getRandomInt(0, board.length - 1), j: getRandomInt(0, board[0].length - 1) };
-
-    for (i = 0; i < gLevel.SIZE ** 2; i++) {
-        loc = { i: getRandomInt(0, board.length - 1), j: getRandomInt(0, board[0].length - 1) };
-        if ((!board[loc.i][loc.j].isMine && !board[loc.i][loc.j].isShown) || (gLevel.SIZE ** 2 - (gGame.shownCount + gGame.markedCount) > gLevel.MINES)) break
+    var locs = [];
+    for (var i = 0; i < board.length; i++) {
+        for (var j = 0; j < board[0].length; j++) {
+            if (!board[i][j].isMine && !board[i][j].isShown) locs.push({ i: i, j: j });
+        }
     }
-    return loc;
+    return locs[getRandomInt(0, locs.length - 1)];
 }
 
 function minesPlacement(elCell, i, j) {
@@ -68,7 +68,7 @@ function minesPlacement(elCell, i, j) {
                 startStopwatch();
                 gGame.firstClick = false;
                 BTN_MANUALMINES.childNodes[1].innerText = '0';
-                BTN_MANUALMINES.disabled = 'true';
+                BTN_MANUALMINES.disabled = true;
                 return false
             } else return false
         }
@@ -78,7 +78,7 @@ function minesPlacement(elCell, i, j) {
         renderCell('html', '', '', '', '');
         startStopwatch();
         gGame.firstClick = false;
-        BTN_MANUALMINES.disabled = 'true';
+        BTN_MANUALMINES.disabled = true;
         return true
     }
 }

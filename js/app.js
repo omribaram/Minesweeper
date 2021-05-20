@@ -15,7 +15,7 @@ const LIFE = '❤️';
 const EL_STOPWATCH = document.querySelector('.stopwatch');
 const EL_MINES = document.querySelector('.unmarked-bombs');
 const EL_MOOD = document.querySelector('.mood');
-const BTN_SAFECLICK = document.querySelector('.safe-click').childNodes[1];
+const BTN_SAFECLICK = document.querySelector('.safe-click');
 const BTN_MANUALMINES = document.querySelector('.manual-mines');
 const EL_BESTSCORE = document.querySelector('.best-score');
 
@@ -39,8 +39,8 @@ function initGame(size = gLevel.SIZE, mines = gLevel.MINES) {
     renderBoard(gBoard); // render the board as HTML
     clearStopwatch(); // initialize the stopwatch
     gSafeClicksCount = 3;
-    BTN_SAFECLICK.innerText = gSafeClicksCount;
-    BTN_MANUALMINES.disabled = '';
+    BTN_SAFECLICK.childNodes[1].innerText = gSafeClicksCount;
+    BTN_MANUALMINES.disabled = false;
     BTN_MANUALMINES.childNodes[1].innerText = gLevel.MINES;
     EL_MOOD.innerText = SMILE_NORMAL; // initialize the HTML mood element
     EL_BESTSCORE.innerText = (!localStorage.getItem(`bestScore-level-${gLevel.SIZE}`)) ? 'You haven\'t won this level yet.' : localStorage.getItem(`bestScore-level-${gLevel.SIZE}`);
@@ -179,12 +179,14 @@ function gameLoss(board) {
         }
     }
     EL_MOOD.innerText = SMILE_LOST;
+    BTN_SAFECLICK.disabled = true;
 }
 
 function gameWon(board) {
     clearInterval(gStopwatchInterval); // stop the stopwatch
     gGame.isOn = false; // stop the game
     EL_MOOD.innerText = SMILE_WON;
+    BTN_SAFECLICK.disabled = true;
     var bestScore = localStorage.getItem(`bestScore-level-${gLevel.SIZE}`);
     if (gGame.secsPassed < bestScore || !bestScore) {
         localStorage.setItem(`bestScore-level-${gLevel.SIZE}`, gGame.secsPassed);
@@ -196,10 +198,16 @@ function useSafeClick() {
     if (gSafeClicksCount === 0) return
     if (gGame.firstClick) minesPlacement();
     var loc = getSafeLoc(gBoard);
+    if (!loc) {
+        BTN_SAFECLICK.childNodes[1].innerText = '0';
+        BTN_SAFECLICK.disabled = true;
+        return;
+    }
     var elCell = document.querySelector(`[data-idx='${loc.i},${loc.j}']`);
     renderCell('add', elCell, '', 'safe-click', '');
     gSafeClicksCount--;
-    BTN_SAFECLICK.innerText = gSafeClicksCount;
+    BTN_SAFECLICK.childNodes[1].innerText = gSafeClicksCount;
+    if (gSafeClicksCount === 0) BTN_SAFECLICK.disabled = true;
     setTimeout(() => {
         renderCell('remove', elCell, '', 'safe-click', '');
     }, 2000);
