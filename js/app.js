@@ -11,83 +11,61 @@ const SMILE_NORMAL = '😃';
 const SMILE_LOST = '😖';
 const SMILE_WON = '😎';
 const HINT = '💡';
-const STOPWATCH_EL = document.querySelector('.stopwatch');
-const MINES_EL = document.querySelector('.unmarked-bombs');
-const LIVES_EL = document.querySelector('.lives-count');
-const MOOD_EL = document.querySelector('.mood');
+const LIFE = '❤️';
+const EL_STOPWATCH = document.querySelector('.stopwatch');
+const EL_MINES = document.querySelector('.unmarked-bombs');
+const EL_MOOD = document.querySelector('.mood');
+const BTN_SAFECLICK = document.querySelector('.safe-click').childNodes[1];
+const BTN_MANUALMINES = document.querySelector('.manual-mines');
+const EL_BESTSCORE = document.querySelector('.best-score');
 
-var gBoard;
 var gLevel;
 var gGame;
 var gUnmarkedMines;
-var gLivesCount;
 var gHints;
+var gLives;
+var gSafeClicksCount;
+var gUndoMoves; //!! TODO !!
+
 
 function initGame(size = gLevel.SIZE, mines = gLevel.MINES) {
+    gUndoMoves = [];
     gLevel = { SIZE: size, MINES: mines }; // set/reset game level
     gGame = { isOn: true, shownCount: 0, markedCount: 0, secsPassed: 0, firstClick: true }; // set/reset game parameters
     buildBoard(); // construct the matrix
     gHints = resetHints(); // set/reset game hints
-    gUnmarkedMines = gLevel.MINES; // set/reset unmarked mines on board
-    gLivesCount = 3; // set/reset lives
-    placeMines(); // place mines randomly                                   //TODO
-    setMinesNegsCount(gBoard); // update matrix with mines negs count       //place the mines after click
+    gLives = resetLives(); // set/reset lives
+    gUnmarkedMines = gLevel.MINES; // set/reset unmarked mines count on board
     renderBoard(gBoard); // render the board as HTML
     clearStopwatch(); // initialize the stopwatch
-    MOOD_EL.innerText = SMILE_NORMAL; // initialize the HTML mood element
-    LIVES_EL.innerText = gLivesCount; // initialize the HTML lives count element
-}
-
-function buildBoard() {
-    gBoard = [];
-    for (var i = 0; i < gLevel.SIZE; i++) {
-        gBoard[i] = [];
-        for (var j = 0; j < gLevel.SIZE; j++) {
-            gBoard[i].push({ minesAroundCount: 0, isShown: false, isMine: false, isMarked: false });
-        }
-    }
-}
-
-function renderBoard(board) {
-    var strHTML = '';
-    for (var i = 0; i < board.length; i++) {
-        strHTML += '<tr>\n';
-        for (var j = 0; j < board[0].length; j++) {
-            var currCell = board[i][j];
-            strHTML += `\t<td data-idx="${i},${j}" oncontextmenu="cellMarked(this,${i},${j})" onclick="cellClicked(this,${i},${j})">\n`;
-            switch (currCell.isMine) {
-                case true:
-                    strHTML += `<span class="content">${MINE}</span>\n
-                                <span class="flagged">${FLAG}</span>\n`;
-                    break;
-                case false:
-                    strHTML += `<span class="content">${currCell.minesAroundCount}</span>\n
-                                <span class="flagged">${FLAG}</span>\n`
-                    break;
-            }
-            strHTML += '\t</td>\n';
-        }
-        strHTML += '</tr>\n';
-    }
-    var elBoard = document.querySelector('.board');
-    elBoard.innerHTML = strHTML;
-    MINES_EL.innerText = gUnmarkedMines;
-    STOPWATCH_EL.innerText = 0;
+    gSafeClicksCount = 3;
+    BTN_SAFECLICK.innerText = gSafeClicksCount;
+    BTN_MANUALMINES.disabled = '';
+    BTN_MANUALMINES.childNodes[1].innerText = gLevel.MINES;
+    EL_MOOD.innerText = SMILE_NORMAL; // initialize the HTML mood element
+    EL_BESTSCORE.innerText = (!localStorage.getItem(`bestScore-level-${gLevel.SIZE}`)) ? 'You haven\'t won this level yet.' : localStorage.getItem(`bestScore-level-${gLevel.SIZE}`);
 }
 
 function cellClicked(elCell, i, j) {
-
-    if (gGame.firstClick) { // If this is the first click of the game, initiate the stopwatch
-        startStopwatch();
-        gGame.firstClick = false;
+    if (gGame.firstClick) {
+        if (!minesPlacement(elCell, i, j)) return;
     }
 
     if (gHints[0].isUnderHint) {
-        elCell.querySelector('.content').classList.add('hint');
+        if (gBoard[i][j].isShown) return;
+        var negs = getNegs({ i: i, j: j });
+        negs.push({ i: i, j: j });
+        for (var i = 0; i < negs.length; i++) {
+            elCell = document.querySelector(`[data-idx='${negs[i].i},${negs[i].j}']`);
+            renderCell('add', elCell, '.content', '', 'hint');
+        }
         setTimeout(() => {
-            elCell.querySelector('.content').classList.remove('hint');
-            gHints[0].isUnderHint = false;
-        }, 1000)
+            for (var i = 0; i < negs.length; i++) {
+                elCell = document.querySelector(`[data-idx='${negs[i].i},${negs[i].j}']`);
+                renderCell('remove', elCell, '.content', '', 'hint');
+            }
+        }, 1000);
+        gHints[0].isUnderHint = false;
         return;
     }
 
@@ -95,16 +73,20 @@ function cellClicked(elCell, i, j) {
         if (!gBoard[i][j].isShown) {
             if (!gBoard[i][j].isMarked) {
                 if (gBoard[i][j].isMine) { // Check if bomb and if live remaining and perform accordingly
-                    if (gLivesCount === 1) {
-                        LIVES_EL.innerText = 0;
-                        elCell.classList.add('clicked-mine');
+                    if (gLives.length === 1) {
+                        gBoard[i][j].isShown = true;
+                        gGame.shownCount++;
+                        renderCell('add', document.querySelector(`[data-life-id='1']`), '', 'used', '')
+                        renderCell('add', elCell, '', 'clicked-mine', '')
                         gameLoss(gBoard);
                     } else {
-                        gLivesCount--;
-                        LIVES_EL.innerText = gLivesCount;
-                        elCell.classList.add('shown', 'clicked-mine');
-                        elCell.querySelector('.content').classList.add('shown');
-                        gBoard[i][j].isMarked = true;
+                        gBoard[i][j].isShown = true;
+                        gGame.shownCount++;
+                        renderCell('add', document.querySelector(`[data-life-id='${gLives.length}']`), '', 'used', '')
+                        gLives[gLives.length - 1].isUsed = true;
+                        gLives.pop();
+                        renderCell('add', elCell, '.content', 'shown-clicked-mine', 'shown');
+                        // gBoard[i][j].isMarked = true;
                         checkGameOver(gBoard);
                     }
                 } else {
@@ -124,10 +106,9 @@ function expandShow(board, elCell, i, j) {
                 board[i][j].isShown = true;
                 gGame.shownCount++;
                 if (board[i][j].minesAroundCount > 0) {
-                    elCell.classList.add('shown');
-                    elCell.querySelector('.content').classList.add('shown');
+                    renderCell('add', elCell, '.content', 'shown', 'shown');
                 } else {
-                    elCell.classList.add('shown-expanded');
+                    renderCell('add', elCell, '', 'shown-expanded', '');
                     var negs = getNegs({ i: i, j: j });
                     for (var idx = 0; idx < negs.length; idx++) {
                         var neg = negs[idx];
@@ -142,51 +123,41 @@ function expandShow(board, elCell, i, j) {
     }
 }
 
-
 function cellMarked(elCell, i, j) {
-    if (gGame.firstClick) { // If this is the first click of the game, initiate the stopwatch
-        startStopwatch();
-        gGame.firstClick = false;
-    }
+    if (gIsManualMine) return;
+
+    if (gGame.firstClick) minesPlacement(elCell, i, j);
+
     if (gGame.isOn) { // Check to see if game is still running
         if (gBoard[i][j].isShown) return; // If a shown cell was clicked, exit
         if (!gBoard[i][j].isMarked && gUnmarkedMines > 0) { // if there are still unmarked bombs left, continue
             gBoard[i][j].isMarked = true;
-            elCell.querySelector('.flagged').classList.add('shown');
+            gGame.markedCount++;
+            renderCell('add', elCell, '.flagged', '', 'shown')
             gUnmarkedMines--;
             checkGameOver(gBoard);
         } else if (gBoard[i][j].isMarked) { // in case of a marked cell, unmark it
             gBoard[i][j].isMarked = false;
-            elCell.querySelector('.flagged').classList.remove('shown');
+            gGame.markedCount--;
+            renderCell('remove', elCell, '.flagged', '', 'shown')
             gUnmarkedMines++;
         }
     }
-    MINES_EL.innerText = gUnmarkedMines;
-}
-
-function gameLoss(board) {
-    clearInterval(gStopwatchInterval); // stop the stopwatch
-    gGame.isOn = false; // stop the game
-    for (var i = 0; i < board.length; i++) { // show all remaining bombs
-        for (var j = 0; j < board[0].length; j++) {
-            if (board[i][j].isMine && !board[i][j].isMarked) {
-                var elCell = document.querySelector(`[data-idx="${i},${j}"]`);
-                elCell.classList.add('shown');
-                elCell.querySelector('.content').classList.add('shown');
-            }
-        }
-    }
-    MOOD_EL.innerText = SMILE_LOST;
-}
-
-function gameWon(board) {
-    clearInterval(gStopwatchInterval); // stop the stopwatch
-    gGame.isOn = false; // stop the game
-    MOOD_EL.innerText = SMILE_WON;
+    EL_MINES.innerText = gUnmarkedMines;
 }
 
 // check if any unmarked bombs or any unshown cells left, in case no, game was won
 function checkGameOver(board) {
+    if (gGame.shownCount === gLevel.SIZE ** 2) {
+        gameLoss(gBoard);
+        return
+    }
+
+    if ((gLevel.SIZE ** 2 === (gGame.shownCount + gGame.markedCount)) && gGame.markedCount !== gLevel.MINES) {
+        gameLoss(gBoard);
+        return
+    }
+
     for (var i = 0; i < board.length; i++) {
         for (var j = 0; j < board[0].length; j++) {
             if (board[i][j].isMine && !board[i][j].isMarked) return;
@@ -196,49 +167,68 @@ function checkGameOver(board) {
     gameWon();
 }
 
-function setMinesNegsCount(board) {
-    var negsMinesCount;
-    for (var i = 0; i < board.length; i++) {
+function gameLoss(board) {
+    clearInterval(gStopwatchInterval); // stop the stopwatch
+    gGame.isOn = false; // stop the game
+    for (var i = 0; i < board.length; i++) { // show all remaining bombs
         for (var j = 0; j < board[0].length; j++) {
-            negsMinesCount = 0;
-            if (!board[i][j].isMine) {
-                var negs = getNegs({ i: i, j: j }); // Gets the negs of checked idx and iterates through it
-                for (var idx = 0; idx < negs.length; idx++) {
-                    if (board[negs[idx].i][negs[idx].j].isMine) negsMinesCount++;
-                }
-                board[i][j].minesAroundCount = negsMinesCount;
+            if (board[i][j].isMine && !board[i][j].isMarked) {
+                var elCell = document.querySelector(`[data-idx="${i},${j}"]`);
+                renderCell('add', elCell, '.content', 'shown', 'shown');
             }
         }
     }
+    EL_MOOD.innerText = SMILE_LOST;
 }
 
-// Place mines on board randomly as per the amount of defined gLevel
-// If there's a mine at location already, repeats...
-function placeMines() {
-    var location;
-    var count = 0;
-    while (count < gLevel.MINES) {
-        location = { i: getRandomInt(0, gBoard.length - 1), j: getRandomInt(0, gBoard[0].length - 1) };
-        if (gBoard[location.i][location.j].isMine) continue;
-        gBoard[location.i][location.j].isMine = true;
-        count++;
+function gameWon(board) {
+    clearInterval(gStopwatchInterval); // stop the stopwatch
+    gGame.isOn = false; // stop the game
+    EL_MOOD.innerText = SMILE_WON;
+    var bestScore = localStorage.getItem(`bestScore-level-${gLevel.SIZE}`);
+    if (gGame.secsPassed < bestScore || !bestScore) {
+        localStorage.setItem(`bestScore-level-${gLevel.SIZE}`, gGame.secsPassed);
+        EL_BESTSCORE.innerText = localStorage.getItem(`bestScore-level-${gLevel.SIZE}`);
     }
 }
 
+function useSafeClick() {
+    if (gSafeClicksCount === 0) return
+    if (gGame.firstClick) minesPlacement();
+    var loc = getSafeLoc(gBoard);
+    var elCell = document.querySelector(`[data-idx='${loc.i},${loc.j}']`);
+    renderCell('add', elCell, '', 'safe-click', '');
+    gSafeClicksCount--;
+    BTN_SAFECLICK.innerText = gSafeClicksCount;
+    setTimeout(() => {
+        renderCell('remove', elCell, '', 'safe-click', '');
+    }, 2000);
+}
+
 function useHint(elHint) {
-    var hintId = elHint.dataset.id;
-    if (gHints[0].isUnderHint || gHints[hintId].isUsed) return
+    var hintIdx = elHint.dataset.hintId;
+    if (gHints[0].isUnderHint || gHints[hintIdx].isUsed) return
     gHints[0].isUnderHint = true;
-    gHints[hintId].isUsed = true
-    elHint.classList.remove('unshown');
+    gHints[hintIdx].isUsed = true
+    renderCell('remove', elHint, '', 'unused', '');
 }
 
 function resetHints() {
     var hints = [{ isUnderHint: false }];
     for (var i = 0; i <= 2; i++) {
-        var elHint = document.querySelector(`[data-id='${i+1}']`);
+        var elHint = document.querySelector(`[data-hint-id='${i+1}']`);
         hints.push({ id: i + 1, isUsed: false });
-        elHint.classList.add('unshown')
+        renderCell('add', elHint, '', 'unused', '');
     }
     return hints;
+}
+
+function resetLives() {
+    var lives = [];
+    for (var i = 0; i <= 2; i++) {
+        var elLife = document.querySelector(`[data-life-id='${i+1}']`);
+        lives.push({ id: i + 1, isUsed: false });
+        renderCell('remove', elLife, '', 'used', '');
+    }
+    return lives;
 }

@@ -8,23 +8,40 @@
 </head>
 
 <body onload="initGame(4,2)">
-    <div>Time: <span class="stopwatch">0</span> || </div>
-    <div>Mines: <span class="unmarked-bombs"></span> ||</div>
-    <div>Level:<button class="level" onclick="initGame(4,2)">Beginner</button>
-        <button class="level" onclick="initGame(8,12)">Medium</button>
-        <button class="level" onclick="initGame(12,30)">Expert</button>
+    <div class="header">
+        <span class="mood" onclick="initGame()">😃</span>
+        <span data-life-id="1" class="life">❤️</span>
+        <span data-life-id="2" class="life">❤️</span>
+        <span data-life-id="3" class="life">❤️</span>
+        <div class="buttons">
+            <button class="level" onclick="initGame(4,2)">Beginner</button><br/>
+            <button class="level" onclick="initGame(8,12)">Medium</button><br/>
+            <button class="level" onclick="initGame(12,30)">Expert</button>
+        </div>
+        <div class="time">
+            <span class="stopwatch">0</span>
+        </div>
+        <div class="unmarked-mines">Mines: <span class="unmarked-bombs"></span>
+        </div>
+        <div class="manual-mine-btn"><button class="manual-mines" onclick="placeMinesManually()">Manual mines: <span></span></button>
+        </div>
+        <div class="safe-clicks">
+            <button class="safe-click" onclick="useSafeClick()">Safe Clicks: <span>3</span></button>
+        </div>
+        <div class="hints">
+            <span data-hint-id="1" class="hint unshown" onclick="useHint(this)">💡</span>
+            <span data-hint-id="2" class="hint unshown" onclick="useHint(this)">💡</span>
+            <span data-hint-id="3" class="hint unshown" onclick="useHint(this)">💡</span>
+        </div>
     </div>
-    <div> || Lives: <span class="lives-count">3</span> || </div>
-    <div><span class="mood" onclick="initGame()">😃</span> || </div>
-    <div><span data-id="1" class="hint unshown" onclick="useHint(this)">💡</span>
-        <span data-id="2" class="hint unshown" onclick="useHint(this)">💡</span>
-        <span data-id="3" class="hint unshown" onclick="useHint(this)">💡</span>
-    </div>
+    <div class="bestscore">Best score for this level: <span class="best-score">0</span></div>
     <table>
         <tbody class="board"></tbody>
     </table>
+    <script src="js/board.js"></script>
     <script src="js/util.js"></script>
     <script src="js/app.js"></script>
 </body>
+<footer>Omri Baram</footer>
 
 </html>
