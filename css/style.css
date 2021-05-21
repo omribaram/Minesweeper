@@ -211,11 +211,27 @@ td span.content.num2 {
 }
 
 td span.content.num3 {
-    color: red
+    color: tomato
 }
 
 td span.content.num4 {
     color: purple
+}
+
+td span.content.num5 {
+    color: maroon
+}
+
+td span.content.num6 {
+    color: turquoise
+}
+
+td span.content.num7 {
+    color: black
+}
+
+td span.content.num8 {
+    color: gray
 }
 
 td span.content.shown {
