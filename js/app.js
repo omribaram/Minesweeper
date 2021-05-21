@@ -210,7 +210,6 @@ function useSafeClick() {
     var loc = getSafeLoc(gBoard);
     if (!loc) {
         BTN_SAFECLICK.innerHTML = 'None safe';
-        BTN_SAFECLICK.disabled = true;
         return;
     }
     var elCell = document.querySelector(`[data-idx='${loc.i},${loc.j}']`);

@@ -26,6 +26,8 @@ function renderBoard(board) {
     }
     var elBoard = document.querySelector('.board');
     elBoard.innerHTML = strHTML;
+    if (gLevel.SIZE === 12) document.querySelector(`table`).classList.add('big');
+    else document.querySelector(`table`).classList.remove('big');
     EL_MINES.innerText = gUnmarkedMines;
     EL_STOPWATCH.innerText = 0;
 }

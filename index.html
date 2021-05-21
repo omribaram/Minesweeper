@@ -11,9 +11,12 @@
     <div class="page">
         <div class="header">
             <span class="mood" onclick="initGame()">😃</span>
-            <span data-life-id="1" class="life">❤️</span>
-            <span data-life-id="2" class="life">❤️</span>
-            <span data-life-id="3" class="life">❤️</span>
+            <div class="lives">
+                <span data-life-id="1" class="life">❤️</span>
+                <span data-life-id="2" class="life">❤️</span>
+                <span data-life-id="3" class="life">❤️</span>
+                <div class="undo"><button class="undo" onclick="undoMoves()">Undo</button></div>
+            </div>
             <div class="buttons">
                 <button class="level" onclick="initGame(4,2)">Beginner</button><br/>
                 <button class="level" onclick="initGame(8,12)">Medium</button><br/>
@@ -35,7 +38,7 @@
                 <span data-hint-id="3" class="hint unshown" onclick="useHint(this)">💡</span>
             </div>
         </div>
-        <div class="score"><span>Best score for this level: </span><span class="best-score">0</span><button class="undo" onclick="undoMoves()">Undo</button></div>
+        <div class="score"><span>Best score for this level: </span><span class="best-score">0</span></div>
         <table>
             <tbody class="board"></tbody>
         </table>
