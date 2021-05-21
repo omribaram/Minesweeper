@@ -60,11 +60,13 @@ function cellClicked(elCell, i, j) {
         negs.push({ i: i, j: j });
         for (var i = 0; i < negs.length; i++) {
             elCell = document.querySelector(`[data-idx='${negs[i].i},${negs[i].j}']`);
+            if (gBoard[negs[i].i][negs[i].j].isMarked) cellMarked(elCell, negs[i].i, negs[i].j);
             renderCell(negs[i].i, negs[i].j, '', elCell, 'hinted', '');
         }
         setTimeout(() => {
             for (var i = 0; i < negs.length; i++) {
                 elCell = document.querySelector(`[data-idx='${negs[i].i},${negs[i].j}']`);
+                if (gBoard[negs[i].i][negs[i].j].isMarked) cellMarked(elCell, negs[i].i, negs[i].j);
                 renderCell(negs[i].i, negs[i].j, 'remove', elCell, 'hinted', '');
             }
         }, 1000);
