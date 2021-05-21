@@ -3,7 +3,7 @@
 var gManualMines = [];
 
 // Returns the negs idxs for each called idx
-function getNegs(idx) {
+function getNegs(idx, hint) {
     var rowIdx = idx.i;
     var colIdx = idx.j;
     var negs = [];
@@ -12,6 +12,7 @@ function getNegs(idx) {
         for (var j = colIdx - 1; j <= colIdx + 1; j++) {
             if (j < 0 || j > gBoard.length - 1) continue
             if (i === rowIdx && j === colIdx) continue
+            if (hint && gBoard[i][j].isShown) continue
             negs.push({ i: i, j: j });
         }
     }

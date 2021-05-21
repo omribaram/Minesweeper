@@ -19,50 +19,53 @@ const BTN_SAFECLICK = document.querySelector('.safe-click');
 const BTN_MANUALMINES = document.querySelector('.manual-mines');
 const EL_BESTSCORE = document.querySelector('.best-score');
 
+var moves
 var gLevel;
 var gGame;
 var gUnmarkedMines;
 var gHints;
-var gLives;
+var gLivesCount;
 var gSafeClicksCount;
-var gUndoMoves; //!! TODO !!
+var gUndoMoves;
 
 function initGame(size = gLevel.SIZE, mines = gLevel.MINES) {
-    gUndoMoves = [];
+    gUndoMoves = []; // set/reset undo moves array
     gLevel = { SIZE: size, MINES: mines }; // set/reset game level
     gGame = { isOn: true, shownCount: 0, markedCount: 0, secsPassed: 0, firstClick: true }; // set/reset game parameters
     buildBoard(); // construct the matrix
     gHints = resetHints(); // set/reset game hints
-    gLives = resetLives(); // set/reset lives
+    gLivesCount = resetLives();
     gUnmarkedMines = gLevel.MINES; // set/reset unmarked mines count on board
-    renderBoard(gBoard); // render the board as HTML
+    renderBoard(gBoard); // render the empty board as HTML
+    gIsManualMine = false // resets manual mine
+    gManualMines = [];
     clearStopwatch(); // initialize the stopwatch
-    gSafeClicksCount = 3;
-    BTN_SAFECLICK.childNodes[1].innerText = gSafeClicksCount;
+    gSafeClicksCount = 3; // initialize the safe clicks, manual mines and mood variables and elements in DOM:
+    BTN_SAFECLICK.innerHTML = `Safe Clicks: <span>${gSafeClicksCount}</span>`;
     BTN_MANUALMINES.disabled = false;
     BTN_SAFECLICK.disabled = false;
     BTN_MANUALMINES.childNodes[1].innerText = gLevel.MINES;
-    EL_MOOD.innerText = SMILE_NORMAL; // initialize the HTML mood element
+    EL_MOOD.innerText = SMILE_NORMAL;
     EL_BESTSCORE.innerText = (!localStorage.getItem(`bestScore-level-${gLevel.SIZE}`)) ? 'You haven\'t won this level yet.' : localStorage.getItem(`bestScore-level-${gLevel.SIZE}`);
 }
 
 function cellClicked(elCell, i, j) {
     if (gGame.firstClick) {
-        if (!minesPlacement(elCell, i, j)) return;
+        if (!minesPlacement(elCell, i, j)) return; // check to see if user is under manual mines placement
     }
 
-    if (gHints[0].isUnderHint) {
+    if (gHints[0].isUnderHint) { // check to see if user is under hint click
         if (gBoard[i][j].isShown) return;
-        var negs = getNegs({ i: i, j: j });
+        var negs = getNegs({ i: i, j: j }, 1);
         negs.push({ i: i, j: j });
         for (var i = 0; i < negs.length; i++) {
             elCell = document.querySelector(`[data-idx='${negs[i].i},${negs[i].j}']`);
-            renderCell('add', elCell, '.content', '', 'hint');
+            renderCell(negs[i].i, negs[i].j, '', elCell, 'hinted', '');
         }
         setTimeout(() => {
             for (var i = 0; i < negs.length; i++) {
                 elCell = document.querySelector(`[data-idx='${negs[i].i},${negs[i].j}']`);
-                renderCell('remove', elCell, '.content', '', 'hint');
+                renderCell(negs[i].i, negs[i].j, 'remove', elCell, 'hinted', '');
             }
         }, 1000);
         gHints[0].isUnderHint = false;
@@ -73,24 +76,27 @@ function cellClicked(elCell, i, j) {
         if (!gBoard[i][j].isShown) {
             if (!gBoard[i][j].isMarked) {
                 if (gBoard[i][j].isMine) { // Check if bomb and if live remaining and perform accordingly
-                    if (gLives.length === 1) {
-                        renderCell('add', document.querySelector(`[data-life-id='1']`), '', 'used', '')
-                        renderCell('add', elCell, '.content', 'shown-clicked-mine', 'shown');
-                        // renderCell('add', elCell, '', 'clicked-mine', '')
+                    if (gLivesCount === 1) {
+                        document.querySelector(`[data-life-id='1']`).classList.add('used');
+                        renderCell(i, j, '', elCell, 'shown', 'shown-clicked-mine');
+                        gUndoMoves.push({ i: i, j: j });
+                        gUndoMoves.push('move');
                         gameLoss(gBoard);
                     } else {
-                        renderCell('add', document.querySelector(`[data-life-id='${gLives.length}']`), '', 'used', '')
-                        gLives[gLives.length - 1].isUsed = true;
-                        gLives.pop();
-                        renderCell('add', elCell, '.content', 'safe-click', 'shown');
+                        document.querySelector(`[data-life-id='${gLivesCount}']`).classList.add('used');
+                        gLivesCount--;
+                        renderCell(i, j, '', elCell, 'shown', 'safe-click');
                         document.querySelector('table').style.pointerEvents = 'none';
+                        gUndoMoves.push({ i: i, j: j });
+                        gUndoMoves.push('move');
                         setTimeout(() => {
-                            renderCell('remove', elCell, '.content', 'safe-click', 'shown');
+                            renderCell(i, j, 'remove', elCell, 'shown', 'safe-click');
                             document.querySelector('table').style.pointerEvents = 'auto';
                         }, 1000);
                     }
                 } else {
                     expandShow(gBoard, elCell, i, j); // If it's not a bomb, open negs recursively
+                    gUndoMoves.push('move');
                     checkGameOver(gBoard); // Checks if game was won
                 }
             }
@@ -103,16 +109,17 @@ function expandShow(board, elCell, i, j) {
     if (!board[i][j].isShown) {
         if (!board[i][j].isMarked) {
             if (!board[i][j].isMine) {
+                gUndoMoves.push({ i: i, j: j });
                 board[i][j].isShown = true;
                 gGame.shownCount++;
-                if (board[i][j].minesAroundCount > 0) {
-                    renderCell('add', elCell, '.content', 'shown', 'shown');
+                if (board[i][j].minesAroundCount > 0) { // if the cell has negs mines, don't open them
+                    renderCell(i, j, '', elCell, 'shown', '');
                 } else {
-                    renderCell('add', elCell, '', 'shown-expanded', '');
+                    renderCell(i, j, '', elCell, '', 'shown-expanded');
                     var negs = getNegs({ i: i, j: j });
                     for (var idx = 0; idx < negs.length; idx++) {
                         var neg = negs[idx];
-                        if (!board[neg.i][neg.j].isMarked && !board[neg.i][neg.j].isShown) {
+                        if (!board[neg.i][neg.j].isMarked && !board[neg.i][neg.j].isShown) { // if the neg is not marked and not shown, recurse
                             elCell = document.querySelector(`[data-idx="${neg.i},${neg.j}"]`);
                             expandShow(board, elCell, neg.i, neg.j);
                         }
@@ -133,14 +140,16 @@ function cellMarked(elCell, i, j) {
         if (!gBoard[i][j].isMarked && gUnmarkedMines > 0) { // if there are still unmarked bombs left, continue
             gBoard[i][j].isMarked = true;
             gGame.markedCount++;
-            renderCell('add', elCell, '.flagged', '', 'shown')
             gUnmarkedMines--;
+            gUndoMoves.push({ i: i, j: j });
+            gUndoMoves.push('move');
+            renderCell(i, j, 'flag', elCell, 'shown', '')
             checkGameOver(gBoard);
         } else if (gBoard[i][j].isMarked) { // in case of a marked cell, unmark it
             gBoard[i][j].isMarked = false;
             gGame.markedCount--;
-            renderCell('remove', elCell, '.flagged', '', 'shown')
             gUnmarkedMines++;
+            renderCell(i, j, 'remove', elCell, 'shown', '')
         }
     }
     EL_MINES.innerText = gUnmarkedMines;
@@ -174,7 +183,7 @@ function gameLoss(board) {
         for (var j = 0; j < board[0].length; j++) {
             if (board[i][j].isMine && !board[i][j].isMarked) {
                 var elCell = document.querySelector(`[data-idx="${i},${j}"]`);
-                renderCell('add', elCell, '.content', 'shown', 'shown');
+                renderCell(i, j, '', elCell, 'shown', 'shown');
             }
         }
     }
@@ -195,30 +204,32 @@ function gameWon(board) {
 }
 
 function useSafeClick() {
+    if (gIsManualMine) return;
     if (gSafeClicksCount === 0) return
     if (gGame.firstClick) minesPlacement();
     var loc = getSafeLoc(gBoard);
     if (!loc) {
-        BTN_SAFECLICK.childNodes[1].innerText = '0';
+        BTN_SAFECLICK.innerHTML = 'None safe';
         BTN_SAFECLICK.disabled = true;
         return;
     }
     var elCell = document.querySelector(`[data-idx='${loc.i},${loc.j}']`);
-    renderCell('add', elCell, '', 'safe-click', '');
+    renderCell(loc.i, loc.j, '', elCell, '', 'safe-click');
     gSafeClicksCount--;
     BTN_SAFECLICK.childNodes[1].innerText = gSafeClicksCount;
     if (gSafeClicksCount === 0) BTN_SAFECLICK.disabled = true;
     setTimeout(() => {
-        renderCell('remove', elCell, '', 'safe-click', '');
+        renderCell(loc.i, loc.j, 'remove', elCell, '', 'safe-click');
     }, 2000);
 }
 
 function useHint(elHint) {
+    if (gIsManualMine) return;
     var hintIdx = elHint.dataset.hintId;
     if (gHints[0].isUnderHint || gHints[hintIdx].isUsed) return
     gHints[0].isUnderHint = true;
     gHints[hintIdx].isUsed = true
-    renderCell('remove', elHint, '', 'unused', '');
+    elHint.classList.remove('unused');
 }
 
 function resetHints() {
@@ -226,17 +237,43 @@ function resetHints() {
     for (var i = 0; i <= 2; i++) {
         var elHint = document.querySelector(`[data-hint-id='${i+1}']`);
         hints.push({ id: i + 1, isUsed: false });
-        renderCell('add', elHint, '', 'unused', '');
+        elHint.classList.add('unused');
     }
     return hints;
 }
 
 function resetLives() {
-    var lives = [];
     for (var i = 0; i <= 2; i++) {
         var elLife = document.querySelector(`[data-life-id='${i+1}']`);
-        lives.push({ id: i + 1, isUsed: false });
-        renderCell('remove', elLife, '', 'used', '');
+        elLife.classList.remove('used');
     }
-    return lives;
+    return 3;
+}
+
+function undoMoves() {
+    if (!gGame.isOn) return
+    gUndoMoves.pop();
+    var moves = (gUndoMoves.lastIndexOf('move') !== -1) ? gUndoMoves.splice(gUndoMoves.lastIndexOf('move') + 1, (gUndoMoves.length) - gUndoMoves.lastIndexOf('move')) : gUndoMoves.splice(0, gUndoMoves.length);
+    for (var i = moves.length - 1; i >= 0; i--) {
+
+        var elCell = document.querySelector(`[data-idx="${moves[i].i},${moves[i].j}"]`);
+
+        if (gBoard[moves[i].i][moves[i].j].isMarked) {
+            cellMarked(elCell, moves[i].i, moves[i].j)
+            return;
+        }
+
+        if (gBoard[moves[i].i][moves[i].j].isShown) {
+            gGame.shownCount--;
+            gBoard[moves[i].i][moves[i].j].isShown = false
+        }
+
+        if (gBoard[moves[i].i][moves[i].j].isMine) {
+            document.querySelector(`[data-life-id='${gLivesCount+1}']`).classList.remove('used');
+            gLivesCount++;
+        }
+
+        if (gBoard[moves[i].i][moves[i].j].minesAroundCount > 0) renderCell(moves[i].i, moves[i].j, 'remove', elCell, 'shown', 'shown');
+        else renderCell(moves[i].i, moves[i].j, 'remove', elCell, '', 'shown-expanded');
+    }
 }

@@ -30,27 +30,33 @@ function renderBoard(board) {
     EL_STOPWATCH.innerText = 0;
 }
 
-function renderCell(op, el1, el2, clsName1, clsName2) {
-    if (op === 'add') {
-        if (clsName1) el1.classList.add(clsName1);
-        if (el2) el1.querySelector(el2).classList.add(clsName2);
-    } else if (op === 'remove') {
-        if (clsName1) el1.classList.remove(clsName1);
-        if (el2) el1.querySelector(el2).classList.remove(clsName2);
-    } else if (op === 'html') {
-        for (var i = 0; i < gBoard.length; i++) {
-            for (var j = 0; j < gBoard[0].length; j++) {
-                var currCell = document.querySelector(`[data-idx='${i},${j}']`);
-                switch (gBoard[i][j].isMine) {
-                    case true:
-                        currCell.innerHTML = `<span class="content">${MINE}</span>\n<span class="flagged">${FLAG}</span>\n`;
-                        break;
-                    case false:
-                        currCell.innerHTML = `<span class="content">${gBoard[i][j].minesAroundCount}</span>\n<span class="flagged">${FLAG}</span>\n`
-                        break;
-                }
-            }
+function renderCell(i, j, op, elCell, clsSpan, clsTd) {
+    if (gBoard[i][j].isShown || (!gBoard[i][j].isShown && clsSpan) || (!gBoard[i][j].isShown && clsTd)) {
+        if (op === 'flag') {
+            elCell.innerHTML = `<span class="flagged">${FLAG}</span>\n`;
+            elCell.childNodes[0].classList.toggle(clsSpan);
+            return
         }
+
+        if (op === 'remove') {
+            if (clsSpan) elCell.innerHTML = ``;
+            if (clsTd) elCell.classList.remove(clsTd);
+            return
+        }
+
+        switch (gBoard[i][j].isMine) {
+            case true:
+                elCell.innerHTML = `<span class="content">${MINE}</span>\n`;
+                elCell.childNodes[0].classList.add(clsSpan);
+                break;
+            case false:
+                if (!gBoard[i][j].isMarked) {
+                    elCell.innerHTML = `<span class="content num${gBoard[i][j].minesAroundCount}">${gBoard[i][j].minesAroundCount}</span>\n`;
+                    if (clsSpan) elCell.childNodes[0].classList.add(clsSpan);
+                }
+                break;
+        }
+        if (clsTd) elCell.classList.toggle(clsTd);
     }
 }
 
@@ -61,18 +67,15 @@ function minesPlacement(elCell, i, j) {
             if (gManualMines.findIndex(idx => (idx.i === i) && (idx.j === j)) === -1) gManualMines.push({ i: i, j: j });
             else return
             BTN_MANUALMINES.classList.add('active');
-            renderCell('add', elCell, '', 'shown-manual-mine', '');
-            BTN_MANUALMINES.childNodes[1].innerText = gLevel.MINES - gManualMines.length;
-            setTimeout(() => {
-                renderCell('remove', elCell, '', 'shown-manual-mine', '');
-            }, 500);
+            renderCell(i, j, '', elCell, '', 'shown-manual-mine');
+            BTN_MANUALMINES.childNodes[1].innerText = gLevel.MINES - gManualMines.length + ' left';
             if (gManualMines.length === gLevel.MINES) {
-                placeMinesManually();
-                setMinesNegsCount(gBoard); // update matrix with mines negs count
-                renderCell('html', '', '', '', '');
-                startStopwatch();
+                gIsManualMine = false;
                 gGame.firstClick = false;
-                BTN_MANUALMINES.childNodes[1].innerText = '0';
+                placeMinesManually(gManualMines);
+                setMinesNegsCount(gBoard); // update matrix with mines negs count
+                startStopwatch();
+                BTN_MANUALMINES.childNodes[1].innerText = 'Play!';
                 BTN_MANUALMINES.disabled = true;
                 return false
             } else return false
@@ -80,7 +83,6 @@ function minesPlacement(elCell, i, j) {
     } else {
         placeMinesAuto({ i: i, j: j }); // place mines randomly
         setMinesNegsCount(gBoard); // update matrix with mines negs count
-        renderCell('html', '', '', '', '');
         startStopwatch();
         gGame.firstClick = false;
         BTN_MANUALMINES.disabled = true;
@@ -101,13 +103,18 @@ function placeMinesAuto(frstClickIdx) {
     }
 }
 
-function placeMinesManually() {
-    if (!gGame.firstClick) return;
-    if (!gIsManualMine) gIsManualMine = true;
-    else {
+function placeMinesManually(mines) {
+    if (!gGame.firstClick && !mines) return;
+    if (gIsManualMine) return;
+    if (!gIsManualMine && gGame.firstClick) {
+        gIsManualMine = true;
+        BTN_MANUALMINES.childNodes[1].innerText += ' left';
+    } else {
         for (var idx = gManualMines.length; idx > 0; idx--) {
             var mineIdx = gManualMines[idx - 1];
+            var elCell = document.querySelector(`[data-idx='${mineIdx.i},${mineIdx.j}']`);
             gBoard[mineIdx.i][mineIdx.j].isMine = true;
+            renderCell(mineIdx.i, mineIdx.j, 'remove', elCell, '', 'shown-manual-mine');
             gManualMines.pop();
         }
         gIsManualMine = false;
