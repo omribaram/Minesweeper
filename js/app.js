@@ -154,15 +154,17 @@ function cellMarked(elCell, i, j) {
             gGame.markedCount++;
             gUnmarkedMines--;
             gUndoMoves.push({ i: i, j: j });
-            gUndoMoves.push('move');
+            gUndoMoves.push(`flag ${i},${j}`);
             gUndoMovesCount++;
             BTN_UNDO.childNodes[1].innerText = gUndoMovesCount;
             renderCell(i, j, 'flag', elCell, 'shown', '')
             checkGameOver(gBoard);
         } else if (gBoard[i][j].isMarked) { // in case of a marked cell, unmark it
+            gUndoMoves.splice(gUndoMoves.indexOf(`flag ${i},${j}`) - 1, 2);
             gBoard[i][j].isMarked = false;
             gGame.markedCount--;
             gUnmarkedMines++;
+
             gUndoMovesCount--;
             renderCell(i, j, 'remove', elCell, 'shown', '')
             BTN_UNDO.childNodes[1].innerText = gUndoMovesCount;
@@ -271,16 +273,20 @@ function resetLives() {
 function undoMoves() {
     if (!gGame.isOn) return
     if (gUndoMoves.length <= 0) return
+
+    if (gUndoMoves[gUndoMoves.length - 1] !== 'move') {
+        var elCell = document.querySelector(`[data-idx="${gUndoMoves[gUndoMoves.length-2].i},${gUndoMoves[gUndoMoves.length-2].j}"]`);
+        cellMarked(elCell, gUndoMoves[gUndoMoves.length - 2].i, gUndoMoves[gUndoMoves.length - 2].j)
+        return;
+    }
+
     gUndoMoves.pop();
-    var moves = (gUndoMoves.lastIndexOf('move') !== -1) ? gUndoMoves.splice(gUndoMoves.lastIndexOf('move') + 1, (gUndoMoves.length) - gUndoMoves.lastIndexOf('move')) : gUndoMoves.splice(0, gUndoMoves.length);
+
+    var moves = (findMoveLastIdx()) ? gUndoMoves.splice(findMoveLastIdx() + 1, ((gUndoMoves.length) - findMoveLastIdx()) - 1) : gUndoMoves.splice(0, gUndoMoves.length);
+    console.log(moves);
     for (var i = moves.length - 1; i >= 0; i--) {
 
         var elCell = document.querySelector(`[data-idx="${moves[i].i},${moves[i].j}"]`);
-
-        if (gBoard[moves[i].i][moves[i].j].isMarked) {
-            cellMarked(elCell, moves[i].i, moves[i].j)
-            return;
-        }
 
         if (gBoard[moves[i].i][moves[i].j].isShown) {
             gGame.shownCount--;

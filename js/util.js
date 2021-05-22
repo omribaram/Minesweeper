@@ -47,3 +47,11 @@ function getSafeLoc(board) {
     }
     return locs[getRandomInt(0, locs.length - 1)];
 }
+
+function findMoveLastIdx() {
+    for (var i = gUndoMoves.length - 1; i >= 0; i--) {
+        if (gUndoMoves[i].toString().includes('flag') || gUndoMoves[i] === 'move') {
+            return i
+        }
+    }
+}

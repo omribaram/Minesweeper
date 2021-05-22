@@ -110,7 +110,7 @@ div.time {
 
 div.safe-clicks {
     position: absolute;
-    right: 10px;
+    right: 12px;
     top: 68px;
 }
 
@@ -127,9 +127,9 @@ div.unmarked-mines {
 
 div.manual-mines {
     position: absolute;
-    top: 74%;
+    top: 77%;
     left: 69%;
-    transform: translate(-50%, -50%);
+    transform: translate(-50%, -55%);
 }
 
 div.hints {
