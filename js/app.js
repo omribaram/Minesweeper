@@ -13,13 +13,13 @@ const SMILE_WON = '😎';
 const HINT = '💡';
 const LIFE = '❤️';
 const EL_STOPWATCH = document.querySelector('.stopwatch');
-const EL_MINES = document.querySelector('.unmarked-bombs');
+const EL_MINES = document.querySelector('.unmarked-mines-count');
 const EL_MOOD = document.querySelector('.mood');
 const BTN_SAFECLICK = document.querySelector('.safe-click');
-const BTN_MANUALMINES = document.querySelector('.manual-mines');
+const BTN_MANUALMINES = document.querySelector('.manual-mines-btn');
+const BTN_UNDO = document.querySelector('.undo-btn');
 const EL_BESTSCORE = document.querySelector('.best-score');
 
-var moves
 var gLevel;
 var gGame;
 var gUnmarkedMines;
@@ -27,9 +27,11 @@ var gHints;
 var gLivesCount;
 var gSafeClicksCount;
 var gUndoMoves;
+var gUndoMovesCount;
 
 function initGame(size = gLevel.SIZE, mines = gLevel.MINES) {
     gUndoMoves = []; // set/reset undo moves array
+    gUndoMovesCount = 0;
     gLevel = { SIZE: size, MINES: mines }; // set/reset game level
     gGame = { isOn: true, shownCount: 0, markedCount: 0, secsPassed: 0, firstClick: true }; // set/reset game parameters
     buildBoard(); // construct the matrix
@@ -44,7 +46,9 @@ function initGame(size = gLevel.SIZE, mines = gLevel.MINES) {
     BTN_SAFECLICK.innerHTML = `Safe Clicks: <span>${gSafeClicksCount}</span>`;
     BTN_MANUALMINES.disabled = false;
     BTN_SAFECLICK.disabled = false;
+    BTN_UNDO.disabled = false;
     BTN_MANUALMINES.childNodes[1].innerText = gLevel.MINES;
+    BTN_UNDO.childNodes[1].innerText = gUndoMovesCount;
     EL_MOOD.innerText = SMILE_NORMAL;
     EL_BESTSCORE.innerText = (!localStorage.getItem(`bestScore-level-${gLevel.SIZE}`)) ? 'You haven\'t won this level yet.' : localStorage.getItem(`bestScore-level-${gLevel.SIZE}`);
 }
@@ -83,6 +87,8 @@ function cellClicked(elCell, i, j) {
                         renderCell(i, j, '', elCell, 'shown', 'shown-clicked-mine');
                         gUndoMoves.push({ i: i, j: j });
                         gUndoMoves.push('move');
+                        gUndoMovesCount++
+                        BTN_UNDO.childNodes[1].innerText = gUndoMovesCount;
                         gameLoss(gBoard);
                     } else {
                         document.querySelector(`[data-life-id='${gLivesCount}']`).classList.add('used');
@@ -91,6 +97,8 @@ function cellClicked(elCell, i, j) {
                         document.querySelector('table').style.pointerEvents = 'none';
                         gUndoMoves.push({ i: i, j: j });
                         gUndoMoves.push('move');
+                        gUndoMovesCount++
+                        BTN_UNDO.childNodes[1].innerText = gUndoMovesCount;
                         setTimeout(() => {
                             renderCell(i, j, 'remove', elCell, 'shown', 'safe-click');
                             document.querySelector('table').style.pointerEvents = 'auto';
@@ -99,6 +107,8 @@ function cellClicked(elCell, i, j) {
                 } else {
                     expandShow(gBoard, elCell, i, j); // If it's not a bomb, open negs recursively
                     gUndoMoves.push('move');
+                    gUndoMovesCount++;
+                    BTN_UNDO.childNodes[1].innerText = gUndoMovesCount;
                     checkGameOver(gBoard); // Checks if game was won
                 }
             }
@@ -145,13 +155,17 @@ function cellMarked(elCell, i, j) {
             gUnmarkedMines--;
             gUndoMoves.push({ i: i, j: j });
             gUndoMoves.push('move');
+            gUndoMovesCount++;
+            BTN_UNDO.childNodes[1].innerText = gUndoMovesCount;
             renderCell(i, j, 'flag', elCell, 'shown', '')
             checkGameOver(gBoard);
         } else if (gBoard[i][j].isMarked) { // in case of a marked cell, unmark it
             gBoard[i][j].isMarked = false;
             gGame.markedCount--;
             gUnmarkedMines++;
+            gUndoMovesCount--;
             renderCell(i, j, 'remove', elCell, 'shown', '')
+            BTN_UNDO.childNodes[1].innerText = gUndoMovesCount;
         }
     }
     EL_MINES.innerText = gUnmarkedMines;
@@ -191,18 +205,20 @@ function gameLoss(board) {
     }
     EL_MOOD.innerText = SMILE_LOST;
     BTN_SAFECLICK.disabled = true;
+    BTN_UNDO.disabled = true;
 }
 
 function gameWon(board) {
     clearInterval(gStopwatchInterval); // stop the stopwatch
     gGame.isOn = false; // stop the game
-    EL_MOOD.innerText = SMILE_WON;
-    BTN_SAFECLICK.disabled = true;
     var bestScore = localStorage.getItem(`bestScore-level-${gLevel.SIZE}`);
     if (gGame.secsPassed < bestScore || !bestScore) {
         localStorage.setItem(`bestScore-level-${gLevel.SIZE}`, gGame.secsPassed);
         EL_BESTSCORE.innerText = localStorage.getItem(`bestScore-level-${gLevel.SIZE}`);
     }
+    EL_MOOD.innerText = SMILE_WON;
+    BTN_SAFECLICK.disabled = true;
+    BTN_UNDO.disabled = true;
 }
 
 function useSafeClick() {
@@ -212,6 +228,7 @@ function useSafeClick() {
     var loc = getSafeLoc(gBoard);
     if (!loc) {
         BTN_SAFECLICK.innerHTML = 'None safe';
+        BTN_SAFECLICK.disabled = true;
         return;
     }
     var elCell = document.querySelector(`[data-idx='${loc.i},${loc.j}']`);
@@ -253,6 +270,7 @@ function resetLives() {
 
 function undoMoves() {
     if (!gGame.isOn) return
+    if (gUndoMoves.length <= 0) return
     gUndoMoves.pop();
     var moves = (gUndoMoves.lastIndexOf('move') !== -1) ? gUndoMoves.splice(gUndoMoves.lastIndexOf('move') + 1, (gUndoMoves.length) - gUndoMoves.lastIndexOf('move')) : gUndoMoves.splice(0, gUndoMoves.length);
     for (var i = moves.length - 1; i >= 0; i--) {
@@ -274,7 +292,14 @@ function undoMoves() {
             gLivesCount++;
         }
 
+        if (gSafeClicksCount > 0 && getSafeLoc(gBoard)) {
+            BTN_SAFECLICK.innerHTML = `Safe Clicks: <span>${gSafeClicksCount}</span>`;
+            BTN_SAFECLICK.disabled = false;
+        }
+
         if (gBoard[moves[i].i][moves[i].j].minesAroundCount > 0) renderCell(moves[i].i, moves[i].j, 'remove', elCell, 'shown', 'shown');
         else renderCell(moves[i].i, moves[i].j, 'remove', elCell, '', 'shown-expanded');
     }
+    gUndoMovesCount--;
+    BTN_UNDO.childNodes[1].innerText = gUndoMovesCount;
 }

@@ -1,6 +1,6 @@
 'use-strict'
 
-var gManualMines = [];
+var gStopwatchInterval;
 
 // Returns the negs idxs for each called idx
 function getNegs(idx, hint) {

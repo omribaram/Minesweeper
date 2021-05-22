@@ -93,7 +93,7 @@ div.score .best-score {
 
 div.buttons {
     position: absolute;
-    left: 245px;
+    left: 246px;
     top: 5px;
 }
 
@@ -104,14 +104,14 @@ div.time {
     text-align: center;
     vertical-align: middle;
     line-height: 105px;
-    left: 379px;
+    left: 374px;
     pointer-events: none;
 }
 
 div.safe-clicks {
     position: absolute;
     right: 10px;
-    top: 67px;
+    top: 68px;
 }
 
 div.unmarked-mines {
@@ -119,22 +119,23 @@ div.unmarked-mines {
     font-size: 40px;
     color: rgb(0, 0, 0);
     line-height: 100%;
+    width: 176px;
     position: absolute;
-    left: 534px;
-    top: 12px
+    left: 535px;
+    top: 15px
 }
 
-div.manual-mine-btn {
+div.manual-mines {
     position: absolute;
     top: 74%;
-    left: 70%;
+    left: 69%;
     transform: translate(-50%, -50%);
 }
 
 div.hints {
     position: inherit;
     right: -368px;
-    top: -20px
+    top: -21px
 }
 
 .stopwatch {
@@ -166,7 +167,7 @@ td {
     position: relative;
     width: 70px;
     height: 70px;
-    font-size: 35px;
+    font-size: 45px;
     font-family: 'Segoe UI';
     cursor: pointer;
     border: 3px groove goldenrod;
@@ -197,7 +198,7 @@ td span.content {
     position: absolute;
     top: 50%;
     left: 50%;
-    transform: translate(-50%, -50%);
+    transform: translate(-49%, -55%);
     opacity: 0;
     vertical-align: middle;
 }
@@ -279,6 +280,7 @@ button {
 }
 
 button.level {
+    width: 130px;
     background-image: linear-gradient(to right, #FF512F 0%, #F09819 51%, #FF512F 100%);
 }
 
@@ -292,7 +294,7 @@ button.safe-click:disabled {
     background-image: linear-gradient(to right, #333333 0%, #a7a7a7 51%, #333333 100%);
 }
 
-button.undo {
+button.undo-btn {
     float: right;
     margin-top: 1px;
     margin-right: 80px;
@@ -300,7 +302,12 @@ button.undo {
     background-image: linear-gradient(to right, #c39292 0%, #c3c3c3 51%, #c39292 100%);
 }
 
-button.manual-mines {
+button.undo-btn:disabled {
+    pointer-events: none;
+    background-image: linear-gradient(to right, #333333 0%, #a7a7a7 51%, #333333 100%);
+}
+
+button.manual-mines-btn {
     text-align: center;
     outline: none;
     color: #fff;
@@ -320,17 +327,17 @@ button.manual-mines {
     background-image: linear-gradient(to right, #ff9100c9 0%, #a18400 51%, #ff9100c9 100%);
 }
 
-button.manual-mines:active {
+button.manual-mines-btn:active {
     box-shadow: 0 5px #666;
     transform: translateY(4px);
 }
 
-button.manual-mines.active {
+button.manual-mines-btn.active {
     box-shadow: 0 5px #666;
     transform: translateY(4px);
 }
 
-button.manual-mines:disabled {
+button.manual-mines-btn:disabled {
     pointer-events: none;
     background-image: linear-gradient(to right, #333333 0%, #a7a7a7 51%, #333333 100%);
 }
@@ -342,15 +349,14 @@ button:hover {
 }
 
 .hint,
-.mood,
-.life {
+.mood {
     cursor: pointer;
 }
 
 .mood {
     position: absolute;
     top: 0%;
-    left: 455px;
+    left: 450px;
     transform: translate(-50%, -50%);
     font-size: 70px;
 }
@@ -365,6 +371,7 @@ button:hover {
     float: left;
     vertical-align: middle;
     font-size: 50px;
+    pointer-events: none;
 }
 
 .hint.unused {

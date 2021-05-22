@@ -15,7 +15,7 @@
                 <span data-life-id="1" class="life">❤️</span>
                 <span data-life-id="2" class="life">❤️</span>
                 <span data-life-id="3" class="life">❤️</span>
-                <div class="undo"><button class="undo" onclick="undoMoves()">Undo</button></div>
+                <div class="undo"><button class="undo-btn" onclick="undoMoves()">Undo: <span>0</span></button></div>
             </div>
             <div class="buttons">
                 <button class="level" onclick="initGame(4,2)">Beginner</button><br/>
@@ -25,9 +25,9 @@
             <div class="time">
                 <span class="stopwatch">0</span>
             </div>
-            <div class="unmarked-mines">Mines: <span class="unmarked-bombs"></span>
+            <div class="unmarked-mines">Mines:<span class="unmarked-mines-count"></span>
             </div>
-            <div class="manual-mine-btn"><button class="manual-mines" onclick="placeMinesManually()">Manual mines: <span></span></button>
+            <div class="manual-mines"><button class="manual-mines-btn" onclick="placeMinesManually()">Manual mines: <span></span></button>
             </div>
             <div class="safe-clicks">
                 <button class="safe-click" onclick="useSafeClick()">Safe Clicks: <span>3</span></button>

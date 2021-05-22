@@ -2,7 +2,7 @@
 
 var gBoard;
 var gIsManualMine;
-var gStopwatchInterval;
+var gManualMines = [];
 
 function buildBoard() {
     gBoard = [];
