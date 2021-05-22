@@ -1,7 +1,7 @@
 'use strict'
 
 // Prevents default context menu on right click
-const noRightClick = document.querySelector('table');
+const noRightClick = document.querySelector('body');
 noRightClick.addEventListener('contextmenu', el => el.preventDefault());
 
 // Definition of constants throughout the game
